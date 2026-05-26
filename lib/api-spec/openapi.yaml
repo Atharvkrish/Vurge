@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: VisaVantage API – marketplace for students and employers
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication & user management
+  - name: jobs
+    description: Job listings
+  - name: applications
+    description: Job applications
+  - name: micro-internships
+    description: Micro-internship projects
+  - name: cv
+    description: CV builder & AI scoring
+  - name: notifications
+    description: In-app notifications
+  - name: dashboard
+    description: Dashboard summaries
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +40,1394 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ──────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/profile:
+    put:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update student or employer profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdateInput"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithProfile"
+
+  # ── JOBS ──────────────────────────────────────────────────────────
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List jobs with optional filters
+      parameters:
+        - name: visaType
+          in: query
+          schema:
+            type: string
+            enum: [STAMP_2, STAMP_1G, GRADUATE_VISA, STUDENT_VISA, ANY]
+        - name: jobType
+          in: query
+          schema:
+            type: string
+            enum: [PART_TIME, FULL_TIME, INTERNSHIP, FREELANCE]
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: minPay
+          in: query
+          schema:
+            type: number
+        - name: maxPay
+          in: query
+          schema:
+            type: number
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: isRemote
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Job list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobListResponse"
+
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a job posting (employer only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "403":
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a single job with visa eligibility for logged-in student
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update a job (employer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Delete a job (employer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── APPLICATIONS ──────────────────────────────────────────────────
+  /jobs/{id}/apply:
+    post:
+      operationId: applyToJob
+      tags: [applications]
+      summary: Student applies to a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "409":
+          description: Already applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List applications (student sees own, employer sees received)
+      responses:
+        "200":
+          description: Application list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationDetail"
+
+  /applications/{id}:
+    put:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update application status (employer) or withdraw (student)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  # ── MICRO-INTERNSHIPS ─────────────────────────────────────────────
+  /micro-internships:
+    get:
+      operationId: listMicroInternships
+      tags: [micro-internships]
+      summary: List open micro-internships
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: minBudget
+          in: query
+          schema:
+            type: number
+        - name: maxBudget
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Micro-internship list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MicroInternshipListResponse"
+
+    post:
+      operationId: createMicroInternship
+      tags: [micro-internships]
+      summary: Employer creates a micro-internship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MicroInternshipInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MicroInternship"
+
+  /micro-internships/{id}:
+    get:
+      operationId: getMicroInternship
+      tags: [micro-internships]
+      summary: Get micro-internship detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Micro-internship detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MicroInternship"
+
+  /micro-internships/{id}/apply:
+    post:
+      operationId: applyToMicroInternship
+      tags: [micro-internships]
+      summary: Student applies to a micro-internship
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MicroApplicationInput"
+      responses:
+        "201":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MicroApplication"
+
+  /micro-internships/{id}/applications/{appId}:
+    put:
+      operationId: updateMicroApplication
+      tags: [micro-internships]
+      summary: Employer accepts or rejects a micro-internship application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MicroApplicationUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MicroApplication"
+
+  # ── CV BUILDER ────────────────────────────────────────────────────
+  /cv:
+    get:
+      operationId: getCv
+      tags: [cv]
+      summary: Get student's saved CV data
+      responses:
+        "200":
+          description: CV data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CvData"
+        "404":
+          description: No CV yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: saveCv
+      tags: [cv]
+      summary: Save/update structured CV data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CvInput"
+      responses:
+        "200":
+          description: Saved CV data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CvData"
+
+  /cv/score:
+    get:
+      operationId: scoreCv
+      tags: [cv]
+      summary: Score student CV against a job description
+      parameters:
+        - name: jobId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CvScoreResult"
+
+  # ── NOTIFICATIONS ─────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Get current user's notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: Done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── DASHBOARD SUMMARIES (wow endpoints) ───────────────────────────
+  /dashboard/student:
+    get:
+      operationId: getStudentDashboard
+      tags: [dashboard]
+      summary: Student dashboard summary
+      responses:
+        "200":
+          description: Student stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDashboard"
+
+  /dashboard/employer:
+    get:
+      operationId: getEmployerDashboard
+      tags: [dashboard]
+      summary: Employer dashboard summary
+      responses:
+        "200":
+          description: Employer stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployerDashboard"
+
+  # ── ADMIN ─────────────────────────────────────────────────────────
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Platform-wide stats (admin only)
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [STUDENT, EMPLOYER, ADMIN]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserListResponse"
+
+  /admin/employers/{id}/verify:
+    post:
+      operationId: verifyEmployer
+      tags: [admin]
+      summary: Verify an employer (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    # ── AUTH SCHEMAS ────────────────────────────────────────────────
+    RegisterInput:
+      type: object
+      required: [email, password, name, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [STUDENT, EMPLOYER]
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    User:
+      type: object
+      required: [id, email, name, role, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [STUDENT, EMPLOYER, ADMIN]
+        emailVerified:
+          type: ["boolean", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    StudentProfile:
+      type: object
+      required: [id, userId]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        university:
+          type: ["string", "null"]
+        course:
+          type: ["string", "null"]
+        graduationYear:
+          type: ["integer", "null"]
+        visaType:
+          type: ["string", "null"]
+          enum: [STAMP_2, STAMP_1G, GRADUATE_VISA, STUDENT_VISA, null]
+        visaExpiryDate:
+          type: ["string", "null"]
+          format: date
+        skills:
+          type: array
+          items:
+            type: string
+        bio:
+          type: ["string", "null"]
+        isVerified:
+          type: boolean
+
+    EmployerProfile:
+      type: object
+      required: [id, userId]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        companyName:
+          type: ["string", "null"]
+        companyRegistration:
+          type: ["string", "null"]
+        taxId:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        sector:
+          type: ["string", "null"]
+        employeeCount:
+          type: ["string", "null"]
+        isVerified:
+          type: boolean
+        trustScore:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+
+    UserWithProfile:
+      type: object
+      required: [id, email, name, role]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [STUDENT, EMPLOYER, ADMIN]
+        studentProfile:
+          $ref: "#/components/schemas/StudentProfile"
+        employerProfile:
+          $ref: "#/components/schemas/EmployerProfile"
+
+    ProfileUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        university:
+          type: string
+        course:
+          type: string
+        graduationYear:
+          type: integer
+        visaType:
+          type: string
+          enum: [STAMP_2, STAMP_1G, GRADUATE_VISA, STUDENT_VISA]
+        visaExpiryDate:
+          type: string
+          format: date
+        skills:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+        companyName:
+          type: string
+        companyRegistration:
+          type: string
+        taxId:
+          type: string
+        website:
+          type: string
+        sector:
+          type: string
+        employeeCount:
+          type: string
+        description:
+          type: string
+
+    # ── JOB SCHEMAS ─────────────────────────────────────────────────
+    Job:
+      type: object
+      required: [id, employerId, title, jobType, status, createdAt]
+      properties:
+        id:
+          type: integer
+        employerId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        jobType:
+          type: string
+          enum: [PART_TIME, FULL_TIME, INTERNSHIP, FREELANCE]
+        visaEligible:
+          type: array
+          items:
+            type: string
+        hoursPerWeek:
+          type: ["number", "null"]
+        payRate:
+          type: ["number", "null"]
+        payPeriod:
+          type: ["string", "null"]
+          enum: [HOURLY, WEEKLY, MONTHLY, null]
+        location:
+          type: ["string", "null"]
+        isRemote:
+          type: boolean
+        isFeatured:
+          type: boolean
+        status:
+          type: string
+          enum: [ACTIVE, CLOSED, DRAFT]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        employer:
+          $ref: "#/components/schemas/EmployerSummary"
+
+    JobDetail:
+      type: object
+      required: [id, employerId, title, jobType, status, createdAt]
+      properties:
+        id:
+          type: integer
+        employerId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        jobType:
+          type: string
+          enum: [PART_TIME, FULL_TIME, INTERNSHIP, FREELANCE]
+        visaEligible:
+          type: array
+          items:
+            type: string
+        hoursPerWeek:
+          type: ["number", "null"]
+        payRate:
+          type: ["number", "null"]
+        payPeriod:
+          type: ["string", "null"]
+          enum: [HOURLY, WEEKLY, MONTHLY, null]
+        location:
+          type: ["string", "null"]
+        isRemote:
+          type: boolean
+        isFeatured:
+          type: boolean
+        status:
+          type: string
+          enum: [ACTIVE, CLOSED, DRAFT]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        employer:
+          $ref: "#/components/schemas/EmployerSummary"
+        visaEligibilityStatus:
+          type: ["string", "null"]
+          enum: [ELIGIBLE, CHECK_HOURS, NOT_ELIGIBLE, null]
+        applicationCount:
+          type: integer
+        hasApplied:
+          type: boolean
+
+    EmployerSummary:
+      type: object
+      required: [id, companyName]
+      properties:
+        id:
+          type: integer
+        companyName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        isVerified:
+          type: boolean
+        trustScore:
+          type: ["number", "null"]
+        sector:
+          type: ["string", "null"]
+
+    JobListResponse:
+      type: object
+      required: [jobs, total, page, limit]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    JobInput:
+      type: object
+      required: [title, jobType]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        jobType:
+          type: string
+          enum: [PART_TIME, FULL_TIME, INTERNSHIP, FREELANCE]
+        visaEligible:
+          type: array
+          items:
+            type: string
+        hoursPerWeek:
+          type: number
+        payRate:
+          type: number
+        payPeriod:
+          type: string
+          enum: [HOURLY, WEEKLY, MONTHLY]
+        location:
+          type: string
+        isRemote:
+          type: boolean
+        isFeatured:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+
+    JobUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        jobType:
+          type: string
+          enum: [PART_TIME, FULL_TIME, INTERNSHIP, FREELANCE]
+        visaEligible:
+          type: array
+          items:
+            type: string
+        hoursPerWeek:
+          type: number
+        payRate:
+          type: number
+        payPeriod:
+          type: string
+          enum: [HOURLY, WEEKLY, MONTHLY]
+        location:
+          type: string
+        isRemote:
+          type: boolean
+        isFeatured:
+          type: boolean
+        status:
+          type: string
+          enum: [ACTIVE, CLOSED, DRAFT]
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ── APPLICATION SCHEMAS ─────────────────────────────────────────
+    Application:
+      type: object
+      required: [id, jobId, studentId, status, appliedAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        studentId:
+          type: integer
+        coverLetter:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [PENDING, VIEWED, SHORTLISTED, REJECTED, HIRED, WITHDRAWN]
+        appliedAt:
+          type: string
+          format: date-time
+
+    ApplicationDetail:
+      type: object
+      required: [id, jobId, studentId, status, appliedAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        studentId:
+          type: integer
+        coverLetter:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [PENDING, VIEWED, SHORTLISTED, REJECTED, HIRED, WITHDRAWN]
+        appliedAt:
+          type: string
+          format: date-time
+        job:
+          $ref: "#/components/schemas/Job"
+        student:
+          $ref: "#/components/schemas/StudentSummary"
+
+    StudentSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        university:
+          type: ["string", "null"]
+        visaType:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+
+    ApplicationInput:
+      type: object
+      properties:
+        coverLetter:
+          type: string
+
+    ApplicationUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, VIEWED, SHORTLISTED, REJECTED, HIRED, WITHDRAWN]
+
+    # ── MICRO-INTERNSHIP SCHEMAS ────────────────────────────────────
+    MicroInternship:
+      type: object
+      required: [id, employerId, title, budget, platformFee, status, createdAt]
+      properties:
+        id:
+          type: integer
+        employerId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        duration:
+          type: ["string", "null"]
+        budget:
+          type: number
+        platformFee:
+          type: number
+        skills:
+          type: array
+          items:
+            type: string
+        deadline:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: string
+          enum: [OPEN, IN_PROGRESS, COMPLETED, CANCELLED]
+        createdAt:
+          type: string
+          format: date-time
+        employer:
+          $ref: "#/components/schemas/EmployerSummary"
+
+    MicroInternshipListResponse:
+      type: object
+      required: [items, total, page, limit]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MicroInternship"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    MicroInternshipInput:
+      type: object
+      required: [title, budget]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        duration:
+          type: string
+        budget:
+          type: number
+        skills:
+          type: array
+          items:
+            type: string
+        deadline:
+          type: string
+          format: date-time
+
+    MicroApplication:
+      type: object
+      required: [id, microId, studentId, status, appliedAt]
+      properties:
+        id:
+          type: integer
+        microId:
+          type: integer
+        studentId:
+          type: integer
+        proposal:
+          type: ["string", "null"]
+        proposedBudget:
+          type: ["number", "null"]
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED, COMPLETED]
+        appliedAt:
+          type: string
+          format: date-time
+
+    MicroApplicationInput:
+      type: object
+      required: [proposal]
+      properties:
+        proposal:
+          type: string
+        proposedBudget:
+          type: number
+
+    MicroApplicationUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACCEPTED, REJECTED, COMPLETED]
+
+    # ── CV SCHEMAS ──────────────────────────────────────────────────
+    CvData:
+      type: object
+      required: [id, studentId, updatedAt]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        parsedJson:
+          type: object
+          additionalProperties: true
+        aiScore:
+          type: ["number", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+
+    CvInput:
+      type: object
+      required: [parsedJson]
+      properties:
+        parsedJson:
+          type: object
+          additionalProperties: true
+
+    CvScoreResult:
+      type: object
+      required: [score, tips]
+      properties:
+        score:
+          type: number
+        tips:
+          type: array
+          items:
+            type: string
+        strengths:
+          type: array
+          items:
+            type: string
+
+    # ── NOTIFICATION SCHEMAS ────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, userId, title, message, read, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        read:
+          type: boolean
+        link:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── DASHBOARD SCHEMAS ───────────────────────────────────────────
+    StudentDashboard:
+      type: object
+      required: [totalApplications, recentApplications, matchingJobs, unreadNotifications]
+      properties:
+        totalApplications:
+          type: integer
+        pendingApplications:
+          type: integer
+        shortlistedApplications:
+          type: integer
+        hiredApplications:
+          type: integer
+        recentApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationDetail"
+        matchingJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        unreadNotifications:
+          type: integer
+        cvScore:
+          type: ["number", "null"]
+
+    EmployerDashboard:
+      type: object
+      required: [totalJobs, totalApplications, recentApplications, activeJobs]
+      properties:
+        totalJobs:
+          type: integer
+        activeJobs:
+          type: integer
+        totalApplications:
+          type: integer
+        pendingApplications:
+          type: integer
+        recentApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationDetail"
+        topJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        unreadNotifications:
+          type: integer
+
+    # ── ADMIN SCHEMAS ───────────────────────────────────────────────
+    AdminStats:
+      type: object
+      required: [totalUsers, totalJobs, totalApplications]
+      properties:
+        totalUsers:
+          type: integer
+        totalStudents:
+          type: integer
+        totalEmployers:
+          type: integer
+        totalJobs:
+          type: integer
+        totalApplications:
+          type: integer
+        totalMicroInternships:
+          type: integer
+        unverifiedEmployers:
+          type: integer
+
+    AdminUser:
+      type: object
+      required: [id, email, name, role, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [STUDENT, EMPLOYER, ADMIN]
+        createdAt:
+          type: string
+          format: date-time
+        studentProfile:
+          $ref: "#/components/schemas/StudentProfile"
+        employerProfile:
+          $ref: "#/components/schemas/EmployerProfile"
+
+    AdminUserListResponse:
+      type: object
+      required: [users, total, page]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+        page:
+          type: integer

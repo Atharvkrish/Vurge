@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "VisaVantage"
+version = "1.0.0"
+id = "artifacts/visa-vantage"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21353
+
+[services.development]
+run = "pnpm --filter @workspace/visa-vantage run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/visa-vantage", "run", "build" ]
+publicDir = "artifacts/visa-vantage/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21353"
+BASE_PATH = "/"

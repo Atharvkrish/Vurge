@@ -1,0 +1,271 @@
+Final Replit Combined Prompt – Build VisaVantage (Internship + Part-Time Job Platform for Ireland & UK)
+Copy and paste the entire prompt below into Replit Agent. The agent will build a fully functional platform.
+
+Context
+You are a senior full-stack engineer building VisaVantage – a dual-sided marketplace connecting students (especially international students on Stamp 2, Stamp 1G, Graduate Visa) with part-time jobs and micro‑internships from SMEs in Ireland and the UK.
+
+The platform must include:
+
+Visa‑smart filtering – jobs automatically show eligibility based on student’s visa type.
+
+Job posting & application – employers post, students apply.
+
+Micro‑internships – fixed‑price short projects (3 days – 2 weeks) with 20% platform fee.
+
+AI CV builder – upload CV → AI extracts skills, generates a formatted CV, and scores match with jobs.
+
+Trust & verification – employer verification (tax ID), student university email/ID verification.
+
+Payments – Stripe for job post fees, premium subscriptions, and micro‑internship escrow.
+
+Tech Stack (Replit compatible)
+Frontend: Next.js 14 (App Router), Tailwind CSS, shadcn/ui
+
+Backend: Next.js API routes (Node.js)
+
+Database: PostgreSQL (Neon or Supabase) – use Prisma ORM
+
+Auth: NextAuth.js (Auth.js) with Google, LinkedIn, email magic link
+
+Payments: Stripe
+
+AI: OpenAI API (GPT‑4o‑mini) for CV parsing & job matching
+
+Email: Resend
+
+File storage: Uploadthing (or AWS S3)
+
+Background jobs: Vercel Cron Jobs (or Upstash) for daily alerts
+
+Rate limiting: Upstash Redis
+
+Core Database Schema (Prisma)
+Use the following models. Generate the full schema.prisma file with these models and proper relations.
+
+Models to include:
+
+User (id, email, name, role: STUDENT/EMPLOYER/ADMIN, emailVerified, etc.)
+
+StudentProfile (userId, university, course, graduationYear, visaType: STAMP_2/STAMP_1G/GRADUATE_VISA/STUDENT_VISA, visaExpiryDate, visaDocumentUrl, skills[], workPreferences[], isVerified, premiumUntil)
+
+EmployerProfile (userId, companyName, companyRegistration, taxId, website, logoUrl, sector, employeeCount, isVerified, trustScore, subscriptionTier)
+
+Job (id, employerId, title, description, category, jobType, visaEligible[], hoursPerWeek, payRate, payPeriod, location, isRemote, isFeatured, expiresAt, status)
+
+Application (id, jobId, studentId, coverLetter, cvUrl, status, appliedAt)
+
+MicroInternship (id, employerId, title, description, duration, budget, platformFee, skills[], deadline, status)
+
+MicroInternshipApplication (id, microId, studentId, proposal, proposedBudget, status)
+
+EmployerReview (id, employerId, studentId, jobId, rating, comment)
+
+Payment (id, userId, stripePaymentIntentId, amount, status)
+
+Notification (id, userId, title, message, read)
+
+Message (id, senderId, receiverId, jobId, content, read)
+
+CVData (id, studentId, rawText, parsedJson, aiScore)
+
+VerificationToken (email, token, type, expiresAt)
+
+API Endpoints to Implement (RESTful, JSON)
+Auth:
+
+POST /api/auth/register – create user with role, send verification email
+
+POST /api/auth/login – email/password or OAuth redirect
+
+GET /api/auth/me – return current user + profile
+
+Jobs:
+
+GET /api/jobs – list jobs with filters (visaType, jobType, location, minPay, page, limit)
+
+POST /api/jobs – employer creates job (auth + role check)
+
+GET /api/jobs/[id] – job details, includes visa eligibility badge for logged-in student
+
+PUT /api/jobs/[id] – update job (employer only)
+
+DELETE /api/jobs/[id] – delete job
+
+Applications:
+
+POST /api/jobs/[id]/apply – student applies (cover letter, attach CV)
+
+GET /api/applications – student sees own applications, employer sees received
+
+PUT /api/applications/[id] – employer updates status (shortlist/reject/hire)
+
+Micro‑internships:
+
+GET /api/micro-internships – list open micros
+
+POST /api/micro-internships – employer creates micro
+
+POST /api/micro-internships/[id]/apply – student applies with proposal
+
+PUT /api/micro-internships/[id]/applications/[appId] – employer accepts/rejects
+
+CV Builder:
+
+POST /api/cv/upload – upload PDF, store in Uploadthing, send to OpenAI for parsing, save parsed JSON to CVData
+
+POST /api/cv/generate – generate PDF from form data using @react-pdf/renderer
+
+GET /api/cv/score?jobId=xxx – compare student’s CV data with job description, return match % and suggestions
+
+Payments:
+
+POST /api/payments/create-intent – create Stripe PaymentIntent for job post or subscription
+
+POST /api/payments/webhook – Stripe webhook (update Payment status, grant premium access, release micro funds)
+
+GET /api/payments/history – user payment history
+
+Admin:
+
+GET /api/admin/users – list all users (admin only)
+
+POST /api/admin/verify-employer – manually verify employer
+
+GET /api/admin/flagged-jobs – jobs with >3 reports
+
+DELETE /api/admin/jobs/[id] – delete flagged job
+
+Features to Build (Priority Order)
+1. Authentication & Onboarding (Day 1-2)
+Set up NextAuth with credentials, Google, LinkedIn.
+
+Registration page: email + role selection (student/employer).
+
+After registration, send verification email (Resend).
+
+On first login, redirect to profile completion:
+
+Student: university, course, visa type, upload visa document.
+
+Employer: company registration number, tax ID, sector.
+
+2. Job Posting & Listing (Day 3-4)
+Employer dashboard: form to post job (title, description, category, job type, visaEligible multi-select, hours, pay, location, expiry).
+
+Job listing page: search bar, filter sidebar with visa type (critical), job type, location, pay range.
+
+Each job card shows: title, company, location, pay, and a visa badge (green = eligible, yellow = check hours, red = not eligible) based on logged-in student’s visa.
+
+Job detail page: full description, employer info, trust score, apply button.
+
+3. Application Workflow (Day 5)
+Student clicks apply → modal with cover letter editor, selects CV (uploaded or generated).
+
+Employer dashboard: list of received applications, can update status (viewed → shortlist → reject → hire).
+
+Student dashboard: track application status, withdraw option.
+
+4. Visa‑Smart Logic (Built into all job queries)
+In GET /api/jobs, add visaType query param. Filter jobs where job.visaEligible includes that visa.
+
+Also enforce hour limits: for STAMP_2/STUDENT_VISA, only jobs with hoursPerWeek <= 20.
+
+Frontend badge: compute eligibility using the same logic.
+
+5. Micro‑Internships Module (Day 6)
+Employer can post “micro‑internship” with fixed budget (e.g., £200). Platform fee 20% auto-added.
+
+Students apply with a short proposal.
+
+Once employer accepts, create a PaymentIntent for the full amount. Student completes work, employer marks complete → Stripe transfers 80% to student, 20% to platform.
+
+Add dispute resolution: admin can override.
+
+6. AI CV Builder (Day 7-8)
+CV upload: parse PDF with OpenAI (prompt: “Extract name, email, skills, experience, education as JSON”).
+
+CV generator: multi‑step form (personal, education, experience, skills) → generate PDF using @react-pdf/renderer, save to Uploadthing.
+
+Job match: send CV JSON + job description to OpenAI, get match score (0‑100) and 3 improvement tips.
+
+7. Trust & Verification (Day 9)
+Employer verification: on signup, store company registration number. Admin panel shows unverified employers; admin clicks “Verify” after checking Companies House / CRO.
+
+Student verification: university email domain check + optional ID upload (admin review).
+
+Trust score for employers: average of student ratings (after job completion). Display star rating on job cards.
+
+8. Payments & Subscriptions (Day 10)
+Job posting fee: €49/£39 standard, €99/£79 featured. Integrate Stripe Checkout.
+
+Premium student plan: £4.99/month – give access to CV scoring, early job alerts. Use Stripe Customer Portal.
+
+Micro‑internship escrow: when accepted, employer pays full amount; platform holds; after completion, release using Stripe Connect.
+
+9. Notifications & Email (Day 11)
+In‑app notifications: create Notification record on application received, status change, micro accepted.
+
+Email alerts: daily cron job (8am) sends matching jobs to premium students. Use Resend.
+
+Application received email to employer.
+
+10. Admin Panel (Day 12)
+Simple dashboard: user counts, job stats, revenue.
+
+Tables: list unverified employers (with approve/deny buttons), flagged jobs.
+
+Ability to manually add/remove trust badges.
+
+11. Polish & Deployment (Day 13-14)
+Add proper error handling, loading states, toast notifications.
+
+Write middleware for role‑based route protection.
+
+Deploy to Vercel (or Replit hosting). Set all environment variables.
+
+Ensure GDPR compliance: cookie consent banner, data export endpoint (/api/user/export), delete account cascade.
+
+Environment Variables (Add to Replit Secrets)
+text
+DATABASE_URL=postgresql://...
+NEXTAUTH_SECRET=...
+NEXTAUTH_URL=https://...
+GOOGLE_ID=...
+GOOGLE_SECRET=...
+LINKEDIN_ID=...
+LINKEDIN_SECRET=...
+RESEND_API_KEY=...
+EMAIL_FROM=noreply@visavantage.com
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
+OPENAI_API_KEY=...
+UPLOADTHING_SECRET=...
+UPLOADTHING_APP_ID=...
+CRON_SECRET=...
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+Replit Specific Instructions
+Use Replit’s built-in PostgreSQL (or connect to Neon). Run npx prisma migrate dev after schema.
+
+Use @uploadthing/react for file uploads (works in Replit).
+
+For background jobs, use Vercel Cron if deploying to Vercel; otherwise use node-cron inside the Replit app.
+
+To test Stripe webhooks locally, use Stripe CLI (install via npm install -g stripe-cli).
+
+Deploy preview: Replit will auto-generate a URL. For production, deploy to Vercel.
+
+Deliverables
+The agent must produce:
+
+A complete, runnable Next.js project with all above features.
+
+All API routes implemented and tested.
+
+A working frontend with student and employer dashboards.
+
+README with setup instructions and environment variables list.
+
+Prisma schema and migrations.
+
+A live deployment URL (Replit or Vercel).
