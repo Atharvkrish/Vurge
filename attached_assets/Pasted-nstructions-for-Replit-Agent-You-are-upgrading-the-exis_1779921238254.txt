@@ -1,0 +1,210 @@
+nstructions for Replit Agent
+You are upgrading the existing Vurge app (Ireland/UK student job platform). The app already has authentication, job posting, application system, micro‑internships, and AI CV parsing. Now enhance it as follows.
+
+1. Remove All Emojis
+Scan the entire codebase and remove any emoji characters from:
+
+Button labels
+
+Headings
+
+Toast notifications
+
+Badges (visa badges, trust badges)
+
+Empty state illustrations
+
+Navigation labels
+
+Replace with clean text or icons from lucide-react. For example:
+
+Instead of “🎓 Student”, use “Student”
+
+Instead of “✅ Verified”, use “Verified” with a check icon
+
+Instead of “⚠️ Check hours”, use “Check Hours” with a clock icon
+
+2. Add 3D Globe Hero Component (Homepage)
+You will create a new homepage layout at app/page.tsx with a full‑screen 3D rotating globe hero, then below it the three new sections.
+
+Step 2.1 – Install Dependencies
+bash
+npm install three @react-three/fiber @react-three/drei framer-motion
+Step 2.2 – Create Component Files
+Create /components/ui/globe-hero.tsx with the exact code provided by the user (copy from above).
+Create /components/ui/globe-hero-demo.tsx (or directly integrate into homepage).
+Ensure the component uses Tailwind classes and respects the existing color scheme (bg-background, text-foreground, primary).
+
+Step 2.3 – Integrate into Homepage
+Update /app/page.tsx:
+
+Import DotGlobeHero and the demo content (or adapt it).
+
+Place the globe hero as the first full‑screen section.
+
+Change the demo text to fit Vurge’s mission:
+“Connect students with verified part‑time jobs and work placements across Ireland and the UK.”
+
+Replace “Global Network” badge with “Student Work Platform” or similar professional text.
+
+Use the same gradient colours as your existing brand (primary, primary-foreground, etc.).
+
+Make sure the globe rotates and has wireframe style.
+
+3. Create Three New Sections (Below the Hero)
+After the globe hero, add three distinct sections in a stacked layout (or tabs/cards). Use Tailwind grid/flex.
+
+Section A: Part‑Time Jobs (Earning Focused)
+Title: “Part‑Time Jobs” + subtext: “Retail, Healthcare, Cleaning, Hospitality & more”
+
+Display a grid of job cards from the Job table where jobType is PART_TIME_TERM or PART_TIME_HOLIDAY and category is one of: RETAIL, HEALTHCARE, CLEANING, HOSPITALITY, WAREHOUSE, CUSTOMER_SERVICE.
+
+Each card shows: job title, pay rate, location, hours per week, and a “Quick Apply” button that opens a modal (no lengthy cover letter required – just a single click or short form).
+
+Add a “View All Part‑Time Jobs” link that goes to /jobs?type=part-time&category=....
+
+Section B: Work Placement (University Direct)
+Title: “University Work Placements” + subtext: “Your university sends your application directly to partner companies”
+
+This feature requires:
+
+A new database table UniversityPlacement linked to University (add University model if not exists: id, name, domain).
+
+A new table DirectApplication that stores applications sent automatically.
+
+For students: When they log in with a university email (e.g., @tcd.ie), they see a list of companies that have partnered with their university.
+
+Students can click “Apply via University” – the system automatically sends their profile (CV, grades if provided) to the company without extra form filling.
+
+For employers: They can enable “Direct University Applications” in their dashboard, selecting which universities they accept applications from.
+
+Show a section with a grid of available university‑direct placements (if the student’s university is matched). If none, show “No direct placements available from your university yet.”
+
+Section C: Find Your Own Work Placement
+Title: “Find Your Own Work Placement” + subtext: “Search and apply to placements independently”
+
+This is essentially a filtered job board showing INTERNSHIP and MICRO_INTERNSHIP job types, plus any FULL_TIME entry‑level roles suitable for placement.
+
+Add a search bar, filters for industry, duration, location.
+
+Each job card has a standard “Apply” button that opens the existing application modal.
+
+Link to /placements page (create new page if needed).
+
+4. CV Builder Page with Instant Match Score
+Create a new page /cv-builder accessible from student dashboard.
+
+Features:
+Structured Form (multi‑step or single long form):
+
+Personal details (name, email, phone)
+
+Work experience (company, title, start/end date, description) – dynamic list
+
+Education (institution, degree, start/end year) – dynamic list
+
+Skills (multi‑select from a predefined list + custom skill input)
+
+Upload existing CV (PDF) – optional
+
+Live Preview (right side or below form) using @react-pdf/renderer to generate a PDF on‑the‑fly.
+
+Instant Match Score:
+
+After the user fills the form, add a button “Match with a Job”.
+
+User selects a job from a dropdown of live jobs (or enters a job ID).
+
+Call POST /api/cv/score that sends the CV data (JSON) and the job description to OpenAI.
+
+Return match score (0–100) and three improvement tips (e.g., “Add more Python experience”).
+
+Display score as a circular progress bar with colour coding (red < 40, yellow 40–70, green > 70).
+
+Save CV: Save the structured data to CVData table (already exists). Allow multiple CV versions.
+
+Apply with this CV: When applying to a job, the student can select which saved CV to use.
+
+API Endpoint Update
+Ensure /api/cv/score accepts { cvData, jobId } and returns { score, suggestions }. Use OpenAI with a prompt that compares skills and experience.
+
+5. UI/UX Polish for Professional Look
+Remove all emojis from the entire app.
+
+Use consistent spacing, rounded corners, and subtle shadows.
+
+Ensure the colour palette uses hsl(var(--primary)) for CTAs, hsl(var(--muted)) for secondary elements.
+
+The globe hero should have a dark gradient overlay so text is readable.
+
+Add smooth scroll behaviour (CSS scroll-behavior: smooth).
+
+Ensure mobile responsiveness: globe hero text stacks, sections become vertical on small screens.
+
+6. Database Changes (Run Migrations)
+Add the following new models to prisma/schema.prisma:
+
+prisma
+model University {
+  id       String   @id @default(cuid())
+  name     String   @unique
+  domain   String   @unique   // e.g., "tcd.ie"
+  createdAt DateTime @default(now())
+}
+
+model UniversityPlacement {
+  id          String   @id @default(cuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id])
+  employerId   String
+  employer     EmployerProfile @relation(fields: [employerId], references: [id])
+  jobId        String
+  job          Job      @relation(fields: [jobId], references: [id])
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model DirectApplication {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+  placementId String
+  placement   UniversityPlacement @relation(fields: [placementId], references: [id])
+  status      ApplicationStatus @default(PENDING)
+  appliedAt   DateTime @default(now())
+}
+Then run:
+
+bash
+npx prisma migrate dev --name add_university_placements
+npx prisma generate
+7. Update Navigation
+Add links to the new sections in the navbar (after login):
+
+“Part‑Time Jobs” → scroll to section or go to /jobs?type=part-time
+
+“Placements” → /placements (own placements page)
+
+“CV Builder” → /cv-builder
+
+8. Testing & Deployment
+Ensure all API routes are protected with authentication where needed.
+
+Test the globe hero on both light and dark modes.
+
+Test CV matching with a real OpenAI API key.
+
+Deploy to Vercel with all environment variables.
+
+Summary of Changes
+Area	Action
+Emojis	Remove all, replace with text/icons
+Homepage	Add 3D globe hero component (full screen) + three new sections below
+Part‑Time Jobs	Grid of non‑career jobs (retail, healthcare, cleaning, hospitality)
+University Direct	Automatic application from university to partner companies
+Own Placements	Standard internship/micro‑internship search and apply
+CV Builder	Structured form, live PDF preview, instant match score against any job
+Start Now
+You have all the code for the globe hero. Copy the provided globe-hero.tsx and the demo integration into the app. Then implement the sections and CV builder as described. Ensure the app remains fully functional and professional.
+
+Begin.
