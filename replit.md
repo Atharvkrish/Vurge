@@ -1,4 +1,4 @@
-# VisaVantage
+# Vurge (formerly VisaVantage)
 
 A dual-sided marketplace connecting international students (Stamp 2, Stamp 1G, Graduate Visa) with part-time jobs and micro-internships from SMEs in Ireland and the UK.
 
@@ -52,7 +52,10 @@ A dual-sided marketplace connecting international students (Stamp 2, Stamp 1G, G
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Brand name is **Vurge** (Gen-Z, modern). Previously VisaVantage.
+- Design system: Dark mode default, glassmorphism (.glass / .glass-card CSS utilities), purple→pink gradients (.gradient-text, .btn-gradient, .gradient-purple-pink), Space Grotesk headings, Framer Motion animations on all pages.
+- All CSS utilities are defined in `artifacts/visa-vantage/src/index.css` under `@layer utilities`.
+- ThemeProvider (next-themes) in main.tsx — `defaultTheme="dark"`, attribute="class".
 
 ## Gotchas
 

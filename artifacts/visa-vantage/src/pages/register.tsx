@@ -7,17 +7,13 @@ import { useAuth } from "@/lib/auth";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Zap, GraduationCap, Building2, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -30,147 +26,194 @@ export default function Register() {
   const [, setLocation] = useLocation();
   const { setToken } = useAuth();
   const { toast } = useToast();
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      role: "STUDENT",
-    },
+    defaultValues: { name: "", email: "", password: "", role: "STUDENT" },
   });
 
+  const selectedRole = form.watch("role");
   const registerMutation = useRegister();
 
   function onSubmit(values: z.infer<typeof registerSchema>) {
     registerMutation.mutate({ data: values }, {
       onSuccess: (data) => {
         setToken(data.token);
-        toast({
-          title: "Account created",
-          description: "Welcome to VisaVantage!",
-        });
-        setLocation('/dashboard');
+        toast({ title: "Welcome to Vurge! 🚀", description: "Your account has been created." });
+        setLocation("/dashboard");
       },
       onError: (error) => {
         toast({
           title: "Registration failed",
-          description: error.data?.error || "An error occurred during registration.",
+          description: (error as any).data?.error || "An error occurred during registration.",
           variant: "destructive",
         });
-      }
+      },
     });
   }
 
   return (
     <Layout>
-      <div className="flex-1 flex items-center justify-center py-12 px-4 bg-muted/30">
-        <Card className="w-full max-w-lg shadow-lg border-primary/10">
-          <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-serif font-bold text-primary">Create an account</CardTitle>
-            <CardDescription>
-              Join VisaVantage to find compliant work or hire international talent
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <div className="flex-1 flex items-center justify-center py-16 px-4 relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute top-[-20%] right-[10%] w-[400px] h-[400px] rounded-full bg-violet-600/10 blur-[100px]" />
+          <div className="absolute bottom-[-20%] left-[10%] w-[400px] h-[400px] rounded-full bg-pink-600/8 blur-[80px]" />
+        </div>
+
+        <motion.div
+          className="relative z-10 w-full max-w-lg"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="glass-card p-8">
+            {/* Logo */}
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-12 h-12 rounded-2xl gradient-purple-pink flex items-center justify-center glow-purple mb-4">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-extrabold gradient-text">Join Vurge</h1>
+              <p className="text-muted-foreground mt-2 text-sm text-center">
+                Find visa-compliant work or hire international talent
+              </p>
+            </div>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                {/* Role selection */}
                 <FormField
                   control={form.control}
                   name="role"
                   render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>I am a...</FormLabel>
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">I am a...</FormLabel>
                       <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-4"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0 border rounded-md p-4 flex-1 cursor-pointer hover:bg-muted/50 transition-colors">
-                            <FormControl>
-                              <RadioGroupItem value="STUDENT" />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              Student
-                            </FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0 border rounded-md p-4 flex-1 cursor-pointer hover:bg-muted/50 transition-colors">
-                            <FormControl>
-                              <RadioGroupItem value="EMPLOYER" />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              Employer
-                            </FormLabel>
-                          </FormItem>
-                        </RadioGroup>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { value: "STUDENT", label: "Student", sub: "Looking for work", icon: GraduationCap },
+                            { value: "EMPLOYER", label: "Employer", sub: "Hiring talent", icon: Building2 },
+                          ].map(({ value, label, sub, icon: Icon }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => field.onChange(value)}
+                              className={`relative p-4 rounded-xl border text-left transition-all ${
+                                field.value === value
+                                  ? "gradient-border bg-primary/5 border-primary/30"
+                                  : "glass border-white/[0.08] hover:border-white/[0.15]"
+                              }`}
+                            >
+                              {field.value === value && (
+                                <div className="absolute top-2 right-2 w-4 h-4 rounded-full gradient-purple-pink flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                </div>
+                              )}
+                              <Icon className={`w-5 h-5 mb-2 ${field.value === value ? "text-primary" : "text-muted-foreground"}`} />
+                              <div className="font-semibold text-sm">{label}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>
+                            </button>
+                          ))}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name {form.watch('role') === 'EMPLOYER' ? '(or Company Name)' : ''}</FormLabel>
+                      <FormLabel className="text-sm font-semibold">
+                        {selectedRole === "EMPLOYER" ? "Company Name" : "Full Name"}
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input
+                          placeholder={selectedRole === "EMPLOYER" ? "Acme Ltd." : "Jane Smith"}
+                          className="glass border-white/[0.1] rounded-xl h-11 focus:border-primary/50 bg-transparent"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-sm font-semibold">Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="name@example.com" {...field} />
+                        <Input
+                          placeholder="you@example.com"
+                          className="glass border-white/[0.1] rounded-xl h-11 focus:border-primary/50 bg-transparent"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-sm font-semibold">Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="8+ characters"
+                            className="glass border-white/[0.1] rounded-xl h-11 focus:border-primary/50 bg-transparent pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full text-lg" 
-                  size="lg"
+
+                <Button
+                  type="submit"
+                  className="w-full btn-gradient h-12 rounded-xl text-base font-semibold mt-2"
                   disabled={registerMutation.isPending}
                 >
-                  {registerMutation.isPending ? "Creating account..." : "Create account"}
+                  {registerMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creating account...
+                    </span>
+                  ) : "Create account →"}
                 </Button>
               </form>
             </Form>
-            <div className="mt-6 text-center text-sm">
+
+            <p className="text-xs text-muted-foreground text-center mt-5">
+              By signing up, you agree to our Terms of Service and Privacy Policy.
+            </p>
+
+            <div className="mt-4 text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>
-              <Link href="/login" className="font-medium text-primary hover:underline">
+              <Link href="/login" className="font-semibold text-primary hover:underline">
                 Sign in
               </Link>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
       </div>
     </Layout>
   );

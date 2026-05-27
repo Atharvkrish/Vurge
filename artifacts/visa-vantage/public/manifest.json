@@ -1,0 +1,16 @@
+{
+  "name": "Vurge — Student Jobs",
+  "short_name": "Vurge",
+  "description": "Visa-smart jobs and micro-internships for international students in Ireland & the UK.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a12",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

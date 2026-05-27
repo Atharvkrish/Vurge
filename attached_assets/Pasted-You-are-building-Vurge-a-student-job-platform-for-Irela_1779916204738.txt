@@ -1,0 +1,121 @@
+You are building Vurge – a student job platform for Ireland and the UK.
+
+Target users: International students (Stamp 2, Stamp 1G, Graduate Visa, Student Visa) and SMEs needing part-time workers or interns.
+
+REQUIRED VIBE & DESIGN (Gen‑Z, modern, aesthetic):
+- Glassmorphism (frosted glass, backdrop blur, soft shadows)
+- Bold gradients (purple → pink, blue → teal)
+- Rounded corners (16px+), large readable typography
+- Dark mode default with neon accents, plus light mode toggle
+- Micro‑interactions: hover scale, button ripples, smooth transitions (Framer Motion)
+- Emojis + simple SVG illustrations (unDraw or Lucide icons)
+- Mobile‑first, fully responsive, PWA ready
+
+TECH STACK:
+- Next.js 14 (App Router), TypeScript, Tailwind CSS
+- shadcn/ui components (customised with gradient overrides)
+- Framer Motion for animations
+- PostgreSQL (Neon or Supabase) + Prisma ORM
+- NextAuth.js (Google, LinkedIn, email magic link)
+- Stripe (payments, subscriptions, escrow for micro‑internships)
+- OpenAI API (CV parsing, job matching)
+- Resend (emails)
+- Uploadthing (file uploads for CVs, visa docs, logos)
+- Upstash Redis (rate limiting, caching)
+
+DATABASE SCHEMA:
+Create these Prisma models exactly (simplified version – you can add fields from previous prompts but include all relationships):
+- User (id, email, name, role: STUDENT/EMPLOYER/ADMIN)
+- StudentProfile (userId, university, visaType, visaExpiryDate, isVerified, premiumUntil)
+- EmployerProfile (userId, companyName, companyRegistration, isVerified, trustScore)
+- Job (id, employerId, title, description, jobType, visaEligible[], hoursPerWeek, payRate, location, isFeatured, expiresAt)
+- Application (id, jobId, studentId, coverLetter, status)
+- MicroInternship (id, employerId, title, budget, platformFee, deadline)
+- MicroInternshipApplication (id, microId, studentId, proposal, status)
+- Payment (id, userId, stripePaymentIntentId, amount, status)
+- Notification (id, userId, title, message, read)
+- CVData (id, studentId, parsedJson, aiScore)
+
+FEATURES (build in this order):
+
+1. AUTH & ONBOARDING
+   - NextAuth with Google + LinkedIn + email.
+   - Role selection (student/employer) on registration.
+   - Email verification via Resend.
+   - Profile completion wizard (step‑by‑step, progress bar).
+   - For students: university, course, visa type, upload visa document.
+   - For employers: company reg number, tax ID, logo.
+
+2. JOB POSTING & LISTING (with visa‑smart filtering)
+   - Employer dashboard: form to post job (title, desc, category, jobType, visaEligible multi‑select, hours, pay, location, featured option).
+   - Job listing page: search bar, filter sidebar (visa type – critical, job type, location, pay). 
+   - Visa badge on each job card: Green = eligible, Yellow = check hours, Red = not eligible (based on logged‑in student’s visa and hour limits).
+   - Infinite scroll with skeleton loaders.
+   - Job detail page: glass card, apply button, employer trust score.
+
+3. APPLICATION WORKFLOW
+   - Student applies via modal (cover letter, select CV from uploaded or AI‑generated).
+   - Employer dashboard: list applications with status update buttons (shortlist, reject, hire).
+   - Student dashboard: track applications, withdraw option.
+
+4. MICRO‑INTERNSHIPS
+   - Separate section for fixed‑price short projects (3 days – 2 weeks).
+   - Employer posts micro with budget, platform fee 20% auto‑added.
+   - Student applies with proposal.
+   - Acceptance creates Stripe PaymentIntent (escrow). After completion, 80% to student, 20% to platform.
+
+5. AI CV BUILDER
+   - Upload PDF → OpenAI extracts skills, experience, education.
+   - Form to edit extracted data.
+   - Generate polished PDF using @react-pdf/renderer, save to Uploadthing.
+   - Job match score: compare CV JSON with job description, return 0‑100% and improvement tips.
+
+6. TRUST & VERIFICATION
+   - Admin panel (role‑based): view unverified employers/students, approve/deny.
+   - Employer trust score = average student rating after job completion.
+   - Display star rating and “Verified” badge.
+
+7. PAYMENTS & SUBSCRIPTIONS
+   - Stripe Checkout for job posting fees (£39 standard, £79 featured).
+   - Student premium subscription (£4.99/month) for CV scoring, early alerts – Stripe Customer Portal.
+   - Webhook handler to update Payment table and grant premium access.
+
+8. NOTIFICATIONS & EMAIL
+   - In‑app notification bell (unread count) using Notification model.
+   - Real‑time: use polling or simple refresh.
+   - Daily email alerts (cron job at 8am) sending matching jobs to premium students via Resend.
+
+9. ADMIN PANEL
+   - Glass dashboard with stats (users, jobs, revenue).
+   - Tables for unverified employers (approve/deny buttons).
+   - Flagged jobs list (with delete option).
+
+10. POLISH & DEPLOYMENT
+    - Add Framer Motion animations (page fade‑up, list stagger, modal pop‑in).
+    - Custom 404 page with illustration.
+    - PWA manifest (add to home screen).
+    - Deploy to Vercel (or Replit hosting) with all environment variables.
+    - Ensure GDPR: cookie banner, data export endpoint, delete account.
+
+ENVIRONMENT VARIABLES (set these in Replit Secrets):
+DATABASE_URL=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=
+GOOGLE_ID=
+GOOGLE_SECRET=
+LINKEDIN_ID=
+LINKEDIN_SECRET=
+RESEND_API_KEY=
+EMAIL_FROM=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+OPENAI_API_KEY=
+UPLOADTHING_SECRET=
+UPLOADTHING_APP_ID=
+CRON_SECRET=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
+START BUILDING NOW. Follow the feature order. Use shadcn/ui components but override styles for glassmorphism, gradients, and rounded corners. Use Framer Motion for all entrance animations. Ensure visa filtering logic is 100% accurate for Stamp 2 (20hrs), Stamp 1G (full‑time), Graduate Visa (full‑time), Student Visa (20hrs).
+
+Write all code, run migrations, and deploy. Make it look like a modern Gen‑Z app.
