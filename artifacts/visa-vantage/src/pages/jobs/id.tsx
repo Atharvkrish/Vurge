@@ -2,10 +2,10 @@ import { useGetJob, useApplyToJob, getGetJobQueryKey } from "@workspace/api-clie
 import { useParams, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Layout } from "@/components/layout";
-import { VisaBadge } from "@/components/job-card";
+import { VisaStatusBadge } from "@/components/job-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building2, Clock, MapPin, Euro, Briefcase, Calendar, CheckCircle2 } from "lucide-react";
+import { Building2, Clock, MapPin, Briefcase, Calendar, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,7 +96,7 @@ export default function JobDetail() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="space-y-4 flex-1">
               <div className="flex items-center gap-3">
-                <VisaBadge status={job.visaEligibilityStatus} hours={job.hoursPerWeek} />
+                <VisaStatusBadge status={job.visaEligibilityStatus ?? undefined} hours={job.hoursPerWeek} />
                 {job.isFeatured && (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
                     Featured
@@ -222,7 +222,7 @@ export default function JobDetail() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Euro className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <Briefcase className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium text-sm text-muted-foreground">Compensation</div>
                     <div className="font-medium">{formatPay()}</div>

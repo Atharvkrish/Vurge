@@ -8,7 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LayoutDashboard, FileText, Briefcase, LogOut, Plus, Shield, Bell, Sun, Moon, Menu, X, Zap } from "lucide-react";
+import {
+  User, LayoutDashboard, FileText, Briefcase, LogOut, Plus,
+  Shield, Bell, Sun, Moon, Menu, X, Zap, GraduationCap, Search,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,17 +35,14 @@ function ThemeToggle() {
 
 function NotificationBell() {
   const { user } = useAuth();
-  const { data } = useListNotifications(
-    { unreadOnly: true, limit: 5 },
-    {
-      query: {
-        enabled: !!user,
-        refetchInterval: 30000,
-        queryKey: ["notifications-count", user?.id],
-      }
+  const { data } = useListNotifications({
+    query: {
+      enabled: !!user,
+      refetchInterval: 30000,
+      queryKey: ["notifications-count", user?.id],
     }
-  );
-  const count = data?.total ?? 0;
+  });
+  const count = data?.filter(n => !(n as any).isRead).length ?? 0;
 
   if (!user) return null;
 
@@ -75,9 +75,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const isActive = (path: string) =>
-    location === path
+    location === path || location.startsWith(path + "?")
       ? "text-foreground font-semibold"
       : "text-muted-foreground hover:text-foreground";
+
+  const NAV_LINKS = [
+    { href: "/jobs", label: "Jobs" },
+    { href: "/placements", label: "Placements" },
+    { href: "/micro-internships", label: "Micro-Internships" },
+  ];
 
   return (
     <div className="min-h-[100dvh] flex flex-col mesh-bg">
@@ -95,12 +101,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex gap-1 items-center text-sm font-medium">
-            <Link href="/jobs" className={`px-4 py-2 rounded-xl transition-all ${isActive("/jobs")} hover:bg-white/[0.05]`}>
-              Jobs
-            </Link>
-            <Link href="/micro-internships" className={`px-4 py-2 rounded-xl transition-all ${isActive("/micro-internships")} hover:bg-white/[0.05]`}>
-              Micro-Internships
-            </Link>
+            {NAV_LINKS.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-4 py-2 rounded-xl transition-all ${isActive(link.href)} hover:bg-white/[0.05]`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {user?.role === "STUDENT" && (
+              <Link
+                href="/cv-builder"
+                className={`px-4 py-2 rounded-xl transition-all ${isActive("/cv-builder")} hover:bg-white/[0.05]`}
+              >
+                CV Builder
+              </Link>
+            )}
           </nav>
 
           {/* Right side */}
@@ -150,6 +167,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       <DropdownMenuItem asChild>
                         <Link href="/applications" className="flex items-center gap-2 cursor-pointer rounded-lg">
                           <FileText className="w-4 h-4 text-primary" /> My Applications
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/cv-builder" className="flex items-center gap-2 cursor-pointer rounded-lg">
+                          <GraduationCap className="w-4 h-4 text-primary" /> CV Builder
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -213,12 +235,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className="md:hidden border-t border-white/[0.07] overflow-hidden"
             >
               <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
-                <Link href="/jobs" className="px-4 py-3 rounded-xl glass text-sm font-medium" onClick={() => setMobileOpen(false)}>
-                  🔍 Jobs
-                </Link>
-                <Link href="/micro-internships" className="px-4 py-3 rounded-xl glass text-sm font-medium" onClick={() => setMobileOpen(false)}>
-                  ⚡ Micro-Internships
-                </Link>
+                {NAV_LINKS.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="px-4 py-3 rounded-xl glass text-sm font-medium"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                {user?.role === "STUDENT" && (
+                  <Link href="/cv-builder" className="px-4 py-3 rounded-xl glass text-sm font-medium" onClick={() => setMobileOpen(false)}>
+                    CV Builder
+                  </Link>
+                )}
                 {!user && (
                   <>
                     <Link href="/login" className="px-4 py-3 rounded-xl glass text-sm font-medium" onClick={() => setMobileOpen(false)}>
@@ -249,10 +280,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="font-bold text-lg gradient-text" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Vurge</span>
             </div>
             <p className="text-muted-foreground text-sm text-center">
-              Connecting international students with visa-compliant opportunities in Ireland & the UK
+              Connecting international students with visa-compliant opportunities in Ireland &amp; the UK
             </p>
             <p className="text-muted-foreground text-sm">
-              © {new Date().getFullYear()} Vurge. All rights reserved.
+              &copy; {new Date().getFullYear()} Vurge. All rights reserved.
             </p>
           </div>
         </div>

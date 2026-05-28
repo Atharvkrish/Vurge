@@ -19,6 +19,8 @@ import AdminDashboard from "@/pages/admin/index";
 import ApplicationsPage from "@/pages/applications/index";
 import ProfilePage from "@/pages/profile/index";
 import PostJobPage from "@/pages/employer/post-job";
+import PlacementsPage from "@/pages/placements/index";
+import CvBuilderPage from "@/pages/cv-builder/index";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -72,6 +74,8 @@ function Router() {
       <Route path="/micro-internships" component={MicroInternshipsList} />
       <Route path="/micro-internships/:id" component={MicroInternshipDetail} />
 
+      <Route path="/placements" component={PlacementsPage} />
+
       <Route path="/dashboard" component={DashboardRedirect} />
 
       <Route path="/student/dashboard" component={() => <ProtectedRoute component={StudentDashboard} allowedRoles={['STUDENT']} />} />
@@ -81,6 +85,7 @@ function Router() {
 
       <Route path="/applications" component={() => <ProtectedRoute component={ApplicationsPage} allowedRoles={['STUDENT', 'EMPLOYER']} />} />
       <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} allowedRoles={['STUDENT', 'EMPLOYER']} />} />
+      <Route path="/cv-builder" component={() => <ProtectedRoute component={CvBuilderPage} allowedRoles={['STUDENT']} />} />
 
       <Route component={NotFound} />
     </Switch>
