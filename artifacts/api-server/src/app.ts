@@ -1,13 +1,13 @@
 import express, { type Express, type Request, type Response } from "express";
 import cors from "cors";
-import pinoHttp from "pino-http";
+import * as pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
 
 app.use(
-  pinoHttp({
+  pinoHttp.pinoHttp({
     logger,
     serializers: {
       req(req: Request) {
@@ -23,7 +23,7 @@ app.use(
         };
       },
     },
-  } as any),
+  }),
 );
 app.use(cors());
 app.use(express.json());
