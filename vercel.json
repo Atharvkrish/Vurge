@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "artifacts/api-server/dist",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "functions": {
+    "artifacts/api-server/api/index.ts": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}
