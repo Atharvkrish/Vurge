@@ -1,10 +1,17 @@
 {
   "buildCommand": "pnpm run build",
-  "outputDirectory": "artifacts/api-server/dist",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "functions": {
-    "artifacts/api-server/api/*.ts": {
-      "runtime": "nodejs20.x"
+    "artifacts/api-server/api/index.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 3008,
+      "maxDuration": 60
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.mjs"
+    }
+  ]
 }
