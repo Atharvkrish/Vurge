@@ -14,9 +14,9 @@ async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
 
-  // Build the API handler for Vercel
+  // Build both app and supporting files so they're available for the Vercel handler
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "api/index.ts")],
+    entryPoints: [path.resolve(artifactDir, "src/app.ts")],
     platform: "node",
     bundle: true,
     format: "esm",
