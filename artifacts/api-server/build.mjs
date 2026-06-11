@@ -16,7 +16,7 @@ async function buildAll() {
 
   // Build both app and supporting files so they're available for the Vercel handler
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/app.ts")],
+      entryPoints: [path.resolve(artifactDir, "src/index.ts")],
     platform: "node",
     bundle: true,
     format: "esm",
